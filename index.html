@@ -127,15 +127,23 @@
     <button class="submit-btn" id="submitBetBtn" onclick="submitBetTicket()" disabled>Select Both Fights to Bet</button>
 
     <!-- Dynamic Payout Preview -->
-    <div class="slip-header">Estimated Returns (If Won)</div>
-    <div class="payout-row">
-        <span>Fight 1 Payout:</span>
-        <span id="payout-f1">$0.00</span>
-    </div>
-    <div class="payout-row">
-        <span>Fight 2 Payout:</span>
-        <span id="payout-f2">$0.00</span>
-    </div>
+    <div class="slip-header">Projected Return</div>
+
+    <div class="payout-row"><span>Fight 1 Current Odds:</span><span id="current-f1">2.00x</span></div>
+    <div class="payout-row"><span>Fight 1 After Your Bet:</span><span id="projected-f1">2.00x</span></div>
+    <div class="payout-row"><span>Fight 1 Estimated Return:</span><span id="payout-f1">$0.00</span></div>
+    <div class="payout-row"><span>Fight 1 Profit:</span><span id="profit-f1">$0.00</span></div>
+
+    <hr style="margin:16px 0;border-color:#334155;">
+
+    <div class="payout-row"><span>Fight 2 Current Odds:</span><span id="current-f2">2.00x</span></div>
+    <div class="payout-row"><span>Fight 2 After Your Bet:</span><span id="projected-f2">2.00x</span></div>
+    <div class="payout-row"><span>Fight 2 Estimated Return:</span><span id="payout-f2">$0.00</span></div>
+    <div class="payout-row"><span>Fight 2 Profit:</span><span id="profit-f2">$0.00</span></div>
+
+    <p style="font-size:11px;color:#94a3b8;margin-top:14px;">
+    * Based on the current pool. Final payout may change as additional bets are placed.
+    </p>
 </div>
 
 <script>
@@ -246,45 +254,36 @@
     }
 
     function calculateEstimatedPayouts() {
-        const wager1 = parseFloat(document.getElementById('wager1').value) || 0;
-        const wager2 = parseFloat(document.getElementById('wager2').value) || 0;
-
-        // Load baseline state values
-        let f1Total = currentOdds.F1_Total_Raw || 0;
-        let f2Total = currentOdds.F2_Total_Raw || 0;
-        let tonyTotal = currentOdds.TonyLiLi_Raw || 0;
-        let kevinTotal = currentOdds.KevinBrown_Raw || 0;
-        let jianTotal = currentOdds.JianHao_Raw || 0;
-        let zhuTotal = currentOdds.Zhu_Raw || 0;
-
-        // --- CALCULATION & MARKET CAP FOR FIGHT 1 ---
-        if (userSelections[1].name && wager1 > 0) {
-            const simulatedTotalPool = f1Total + wager1;
-            let simulatedFighterPool = userSelections[1].name === 'TonyLiLi' ? tonyTotal + wager1 : kevinTotal + wager1;
-            
-            // Raw dynamic estimation logic
-            let calculatedPayout = wager1 * (simulatedTotalPool / simulatedFighterPool);
-            
-            // Hard limit: A winning ticket cannot payout more than the entire pool value
-            let cappedPayout = Math.min(calculatedPayout, simulatedTotalPool);
-            
-            document.getElementById('payout-f1').innerText = `$${cappedPayout.toFixed(2)}`;
-        } else {
-            document.getElementById('payout-f1').innerText = `$0.00`;
-        }
-        
-        // --- CALCULATION & MARKET CAP FOR FIGHT 2 ---
-        if (userSelections[2].name && wager2 > 0) {
-            const simulatedTotalPool = f2Total + wager2;
-            let simulatedFighterPool = userSelections[2].name === 'JianHao' ? jianTotal + wager2 : zhuTotal + wager2;
-            
-            let calculatedPayout = wager2 * (simulatedTotalPool / simulatedFighterPool);
-            let cappedPayout = Math.min(calculatedPayout, simulatedTotalPool);
-            
-            document.getElementById('payout-f2').innerText = `$${cappedPayout.toFixed(2)}`;
-        } else {
-            document.getElementById('payout-f2').innerText = `$0.00`;
-        }
+        const calc=(fight,wager,total,a,b,aName)=>{
+            if(!userSelections[fight].name){
+                document.getElementById(`current-f${fight}`).innerText="-";
+                document.getElementById(`projected-f${fight}`).innerText="-";
+                document.getElementById(`payout-f${fight}`).innerText="$0.00";
+                document.getElementById(`profit-f${fight}`).innerText="$0.00";
+                return;
+            }
+            const selected=userSelections[fight].name===aName?a:b;
+            const current= total===0?2:(selected>0?total/selected:total);
+            const projected=(total+wager)/(selected+wager);
+            let payout=Math.min(wager*projected,total+wager);
+            let profit=payout-wager;
+            document.getElementById(`current-f${fight}`).innerText=current.toFixed(2)+"x";
+            document.getElementById(`projected-f${fight}`).innerText=projected.toFixed(2)+"x";
+            document.getElementById(`payout-f${fight}`).innerText="$"+payout.toFixed(2);
+            document.getElementById(`profit-f${fight}`).innerText="$"+profit.toFixed(2);
+        };
+        calc(1,
+            parseFloat(document.getElementById('wager1').value)||0,
+            currentOdds.F1_Total_Raw||0,
+            currentOdds.TonyLiLi_Raw||0,
+            currentOdds.KevinBrown_Raw||0,
+            'TonyLiLi');
+        calc(2,
+            parseFloat(document.getElementById('wager2').value)||0,
+            currentOdds.F2_Total_Raw||0,
+            currentOdds.JianHao_Raw||0,
+            currentOdds.Zhu_Raw||0,
+            'JianHao');
     }
 
     async function submitBetTicket() {
