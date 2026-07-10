@@ -57,12 +57,18 @@
             <button class="btn" id="btn-TonyLiLi" onclick="selectFighter(1, 'TonyLiLi', this)">
                 <img src="https://media.discordapp.net/attachments/754171492543234049/1525222750732423370/image.png?ex=6a5299e1&is=6a514861&hm=ae8745cbb0e48c25bb1797305c937d50aa4cdfbe1260a65b2adafa69ff5a9aef&=&format=webp&quality=lossless&width=141&height=141" class="fighter-img" alt="Tony LiLi">
                 Tony LiLi 
-                <span id="odds-TonyLiLi">Return Multiplier: 2.00x</span>
+                <span id="odds-TonyLiLi">
+                Current: 2.00x<br>
+                After Bet: 2.00x
+                </span>
             </button>
             <button class="btn" id="btn-KevinBrown" onclick="selectFighter(1, 'KevinBrown', this)">
                 <img src="https://media.discordapp.net/attachments/754171492543234049/1525223554121994432/image.png?ex=6a529aa0&is=6a514920&hm=fa1c7442fd1107e4b40ec014ad25c89a76c139affeec07ca1461c72060941f1d&=&format=webp&quality=lossless&width=141&height=141" class="fighter-img" alt="Kevin Brown">
                 Kevin Brown 
-                <span id="odds-KevinBrown">Return Multiplier: 2.00x</span>
+                <span id="odds-KevinBrown">
+                    Current: 2.00x<br>
+                    After Bet: 2.00x
+                    </span>
             </button>
         </div>
         
@@ -91,12 +97,18 @@
             <button class="btn" id="btn-JianHao" onclick="selectFighter(2, 'JianHao', this)">
                 <img src="https://placehold.co/150" class="fighter-img" alt="Jian Hao">
                 Jian Hao 
-                <span id="odds-JianHao">Return Multiplier: 2.00x</span>
+                <span id="odds-JianHao">
+                    Current: 2.00x<br>
+                    After Bet: 2.00x
+                    </span>
             </button>
             <button class="btn" id="btn-Zhu" onclick="selectFighter(2, 'Zhu', this)">
                 <img src="https://placehold.co/150" class="fighter-img" alt="Zhu">
                 Zhu 
-                <span id="odds-Zhu">Return Multiplier: 2.00x</span>
+               <span id="odds-Zhu">
+                Current: 2.00x<br>
+                After Bet: 2.00x
+                </span>
             </button>
         </div>
 
@@ -178,8 +190,93 @@
             submitBtn.disabled = false;
             submitBtn.innerText = "Submit Bet Ticket";
         }
+
+        function getProjectedMultiplier(totalPool, selectedPool, wager) {
+
+    if (totalPool === 0)
+        return 2.00;
+
+    if (selectedPool === 0)
+        return (totalPool + wager) / wager;
+
+    return (totalPool + wager) / (selectedPool + wager);
+
+}
         
         calculateEstimatedPayouts();
+    
+    // ---------- Live fighter odds ----------
+
+// Fight 1
+{
+    const wager = parseFloat(document.getElementById("wager1").value) || 0;
+
+    const currentTony =
+        currentOdds.F1_Total_Raw === 0
+            ? 2
+            : currentOdds.TonyLiLi;
+
+    const currentKevin =
+        currentOdds.F1_Total_Raw === 0
+            ? 2
+            : currentOdds.KevinBrown;
+
+    const projectedTony =
+        getProjectedMultiplier(
+            currentOdds.F1_Total_Raw,
+            currentOdds.TonyLiLi_Raw,
+            wager
+        );
+
+    const projectedKevin =
+        getProjectedMultiplier(
+            currentOdds.F1_Total_Raw,
+            currentOdds.KevinBrown_Raw,
+            wager
+        );
+
+    document.getElementById("odds-TonyLiLi").innerHTML =
+        `Current: ${currentTony.toFixed(2)}x<br>After Bet: ${projectedTony.toFixed(2)}x`;
+
+    document.getElementById("odds-KevinBrown").innerHTML =
+        `Current: ${currentKevin.toFixed(2)}x<br>After Bet: ${projectedKevin.toFixed(2)}x`;
+}
+
+// Fight 2
+{
+    const wager = parseFloat(document.getElementById("wager2").value) || 0;
+
+    const currentJian =
+        currentOdds.F2_Total_Raw === 0
+            ? 2
+            : currentOdds.JianHao;
+
+    const currentZhu =
+        currentOdds.F2_Total_Raw === 0
+            ? 2
+            : currentOdds.Zhu;
+
+    const projectedJian =
+        getProjectedMultiplier(
+            currentOdds.F2_Total_Raw,
+            currentOdds.JianHao_Raw,
+            wager
+        );
+
+    const projectedZhu =
+        getProjectedMultiplier(
+            currentOdds.F2_Total_Raw,
+            currentOdds.Zhu_Raw,
+            wager
+        );
+
+    document.getElementById("odds-JianHao").innerHTML =
+        `Current: ${currentJian.toFixed(2)}x<br>After Bet: ${projectedJian.toFixed(2)}x`;
+
+    document.getElementById("odds-Zhu").innerHTML =
+        `Current: ${currentZhu.toFixed(2)}x<br>After Bet: ${projectedZhu.toFixed(2)}x`;
+}
+    
     }
 
     async function fetchPoolData() {
@@ -253,71 +350,99 @@
         calculateEstimatedPayouts();
     }
 
-    function calculateEstimatedPayouts() {
-        const calc=(fight,wager,total,a,b,aName)=>{
-            if(!userSelections[fight].name){
-                document.getElementById(`current-f${fight}`).innerText="-";
-                document.getElementById(`projected-f${fight}`).innerText="-";
-                document.getElementById(`payout-f${fight}`).innerText="$0.00";
-                document.getElementById(`profit-f${fight}`).innerText="$0.00";
-                return;
-            }
-            const selected=userSelections[fight].name===aName?a:b;
-            const current= total===0?2:(selected>0?total/selected:total);
-            const projected=(total+wager)/(selected+wager);
-            let payout=Math.min(wager*projected,total+wager);
-            let profit=payout-wager;
-            document.getElementById(`current-f${fight}`).innerText=current.toFixed(2)+"x";
-            document.getElementById(`projected-f${fight}`).innerText=projected.toFixed(2)+"x";
-            document.getElementById(`payout-f${fight}`).innerText="$"+payout.toFixed(2);
-            document.getElementById(`profit-f${fight}`).innerText="$"+profit.toFixed(2);
-        };
-        calc(1,
-            parseFloat(document.getElementById('wager1').value)||0,
-            currentOdds.F1_Total_Raw||0,
-            currentOdds.TonyLiLi_Raw||0,
-            currentOdds.KevinBrown_Raw||0,
-            'TonyLiLi');
-        calc(2,
-            parseFloat(document.getElementById('wager2').value)||0,
-            currentOdds.F2_Total_Raw||0,
-            currentOdds.JianHao_Raw||0,
-            currentOdds.Zhu_Raw||0,
-            'JianHao');
+  function calculateEstimatedPayouts() {
+
+    updateFight(
+        1,
+        parseFloat(document.getElementById("wager1").value) || 0,
+        currentOdds.F1_Total_Raw || 0,
+        currentOdds.TonyLiLi_Raw || 0,
+        currentOdds.KevinBrown_Raw || 0,
+        "TonyLiLi"
+    );
+
+    updateFight(
+        2,
+        parseFloat(document.getElementById("wager2").value) || 0,
+        currentOdds.F2_Total_Raw || 0,
+        currentOdds.JianHao_Raw || 0,
+        currentOdds.Zhu_Raw || 0,
+        "JianHao"
+    );
+}
+
+function updateFight(fightNum, wager, totalPool, sideA, sideB, sideAName) {
+
+    if (!userSelections[fightNum].name || wager <= 0) {
+        document.getElementById(`current-f${fightNum}`).innerText = "-";
+        document.getElementById(`projected-f${fightNum}`).innerText = "-";
+        document.getElementById(`payout-f${fightNum}`).innerText = "$0.00";
+        document.getElementById(`profit-f${fightNum}`).innerText = "$0.00";
+        return;
     }
 
-    async function submitBetTicket() {
-        const name = document.getElementById('playerName').value.trim();
-        const wager1 = parseFloat(document.getElementById('wager1').value) || 0;
-        const wager2 = parseFloat(document.getElementById('wager2').value) || 0;
+    const selectedPool =
+        userSelections[fightNum].name === sideAName
+            ? sideA
+            : sideB;
 
-        if (!name) {
-            alert("Please enter your name to submit!");
-            return;
-        }
+    let currentMultiplier;
+    let projectedMultiplier;
 
-        const { error: err1 } = await supabaseClient.from('bets').insert([
-            { player_name: name, fight_number: 1, fighter_picked: userSelections[1].name, wager_amount: wager1 }
-        ]);
+    // -----------------------
+    // Empty market
+    // -----------------------
+    if (totalPool === 0) {
 
-        const { error: err2 } = await supabaseClient.from('bets').insert([
-            { player_name: name, fight_number: 2, fighter_picked: userSelections[2].name, wager_amount: wager2 }
-        ]);
+        currentMultiplier = 2.00;
+        projectedMultiplier = 2.00;
 
-        if (err1 || err2) {
-            alert("Error saving your bets.");
-        } else {
-            alert("Ticket successfully logged!");
-            document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
-            userSelections = { 1: { name: null }, 2: { name: null } };
-            document.getElementById('playerName').value = '';
-            document.getElementById('wager1').value = '10';
-            document.getElementById('wager2').value = '10';
-            document.getElementById('submitBetBtn').disabled = true;
-            document.getElementById('submitBetBtn').innerText = "Select Both Fights to Bet";
-            fetchPoolData();
-        }
     }
+    // -----------------------
+    // Nobody has bet your fighter yet
+    // -----------------------
+    else if (selectedPool === 0) {
+
+        currentMultiplier = totalPool;
+
+        projectedMultiplier =
+            (totalPool + wager) /
+            wager;
+
+    }
+    // -----------------------
+    // Normal calculation
+    // -----------------------
+    else {
+
+        currentMultiplier =
+            totalPool / selectedPool;
+
+        projectedMultiplier =
+            (totalPool + wager) /
+            (selectedPool + wager);
+
+    }
+
+    let payout = wager * projectedMultiplier;
+
+    // Safety cap
+    payout = Math.min(payout, totalPool + wager);
+
+    let profit = payout - wager;
+
+    document.getElementById(`current-f${fightNum}`).innerText =
+        currentMultiplier.toFixed(2) + "x";
+
+    document.getElementById(`projected-f${fightNum}`).innerText =
+        projectedMultiplier.toFixed(2) + "x";
+
+    document.getElementById(`payout-f${fightNum}`).innerText =
+        "$" + payout.toFixed(2);
+
+    document.getElementById(`profit-f${fightNum}`).innerText =
+        "$" + profit.toFixed(2);
+}
 </script>
 
 </body>
