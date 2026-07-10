@@ -14,16 +14,20 @@
         .subtitle { text-align: center; font-size: 14px; color: #94a3b8; margin-bottom: 24px; }
         .fight-card { background-color: #0f172a; padding: 16px; border-radius: 12px; margin-bottom: 20px; }
         .fight-title { text-align: center; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 12px; }
-        .btn-group { display: flex; gap: 10px; }
+        .btn-group { display: flex; gap: 10px; margin-bottom: 12px; }
         .btn { flex: 1; background-color: #334155; color: #f8fafc; border: 2px solid transparent; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 8px; }
         .fighter-img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #475569; background-color: #1e293b; }
         .btn.active .fighter-img { border-color: #38bdf8; }
         .btn span { font-size: 11px; color: #38bdf8; }
         .btn.active { background-color: #0284c7; border-color: #38bdf8; }
         .form-group { margin-bottom: 16px; }
+        .wager-row { display: flex; align-items: center; justify-content: space-between; background: #1e293b; padding: 8px; border-radius: 6px; }
+        .wager-row label { font-size: 12px; color: #94a3b8; margin-bottom: 0; }
+        .wager-input { width: 100px; background-color: #0f172a; border: 2px solid #334155; color: #f8fafc; padding: 6px 10px; border-radius: 6px; font-size: 14px; font-weight: 600; text-align: right; }
+        .wager-input:focus { outline: none; border-color: #38bdf8; }
         label { display: block; font-size: 14px; margin-bottom: 6px; color: #94a3b8; }
-        input { width: 100%; background-color: #0f172a; border: 2px solid #334155; color: #f8fafc; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: 600; }
-        input:focus { outline: none; border-color: #38bdf8; }
+        input[type="text"] { width: 100%; background-color: #0f172a; border: 2px solid #334155; color: #f8fafc; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: 600; }
+        input[type="text"]:focus { outline: none; border-color: #38bdf8; }
         .submit-btn { width: 100%; background-color: #22c55e; color: #fff; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 10px; transition: background 0.2s; }
         .submit-btn:hover { background-color: #16a34a; }
         .submit-btn:disabled { background-color: #475569; cursor: not-allowed; }
@@ -51,6 +55,10 @@
                 Kevin Brown <span id="odds-KevinBrown">Odds: 2.00x</span>
             </button>
         </div>
+        <div class="wager-row">
+            <label for="wager1">Fight 1 Wager ($)</label>
+            <input type="number" id="wager1" class="wager-input" value="10" min="1" oninput="calculateEstimatedPayouts()">
+        </div>
     </div>
 
     <!-- Fight 2 -->
@@ -66,17 +74,16 @@
                 Zhu <span id="odds-Zhu">Odds: 2.00x</span>
             </button>
         </div>
+        <div class="wager-row">
+            <label for="wager2">Fight 2 Wager ($)</label>
+            <input type="number" id="wager2" class="wager-input" value="10" min="1" oninput="calculateEstimatedPayouts()">
+        </div>
     </div>
 
     <!-- User Inputs -->
     <div class="form-group">
         <label for="playerName">Your Name</label>
         <input type="text" id="playerName" placeholder="Enter name to lock in bet">
-    </div>
-
-    <div class="form-group">
-        <label for="wager">Your Wager Per Fight ($)</label>
-        <input type="number" id="wager" value="10" min="1" oninput="calculateEstimatedPayouts()">
     </div>
 
     <button class="submit-btn" id="submitBetBtn" onclick="submitBetTicket()" disabled>Select Both Fights to Bet</button>
@@ -161,17 +168,18 @@
     }
 
     function calculateEstimatedPayouts() {
-        const wager = parseFloat(document.getElementById('wager').value) || 0;
+        const wager1 = parseFloat(document.getElementById('wager1').value) || 0;
+        const wager2 = parseFloat(document.getElementById('wager2').value) || 0;
 
         if (userSelections[1].name) {
-            const p1 = wager * currentOdds[userSelections[1].name];
+            const p1 = wager1 * currentOdds[userSelections[1].name];
             document.getElementById('payout-f1').innerText = `$${p1.toFixed(2)}`;
         } else {
             document.getElementById('payout-f1').innerText = `$0.00`;
         }
         
         if (userSelections[2].name) {
-            const p2 = wager * currentOdds[userSelections[2].name];
+            const p2 = wager2 * currentOdds[userSelections[2].name];
             document.getElementById('payout-f2').innerText = `$${p2.toFixed(2)}`;
         } else {
             document.getElementById('payout-f2').innerText = `$0.00`;
@@ -180,7 +188,8 @@
 
     async function submitBetTicket() {
         const name = document.getElementById('playerName').value.trim();
-        const wager = parseFloat(document.getElementById('wager').value) || 0;
+        const wager1 = parseFloat(document.getElementById('wager1').value) || 0;
+        const wager2 = parseFloat(document.getElementById('wager2').value) || 0;
 
         if (!name) {
             alert("Please enter your name to submit!");
@@ -188,20 +197,22 @@
         }
 
         const { error: err1 } = await supabaseClient.from('bets').insert([
-            { player_name: name, fight_number: 1, fighter_picked: userSelections[1].name, wager_amount: wager }
+            { player_name: name, fight_number: 1, fighter_picked: userSelections[1].name, wager_amount: wager1 }
         ]);
 
         const { error: err2 } = await supabaseClient.from('bets').insert([
-            { player_name: name, fight_number: 2, fighter_picked: userSelections[2].name, wager_amount: wager }
+            { player_name: name, fight_number: 2, fighter_picked: userSelections[2].name, wager_amount: wager2 }
         ]);
 
         if (err1 || err2) {
-            alert("Error saving your bets. Make sure you ran the SQL command to disable RLS.");
+            alert("Error saving your bets.");
         } else {
             alert("Ticket successfully logged!");
             document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
             userSelections = { 1: { name: null }, 2: { name: null } };
             document.getElementById('playerName').value = '';
+            document.getElementById('wager1').value = '10';
+            document.getElementById('wager2').value = '10';
             document.getElementById('submitBetBtn').disabled = true;
             document.getElementById('submitBetBtn').innerText = "Select Both Fights to Bet";
             fetchPoolData();
