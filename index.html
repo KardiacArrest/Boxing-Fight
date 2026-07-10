@@ -15,7 +15,9 @@
         .fight-card { background-color: #0f172a; padding: 16px; border-radius: 12px; margin-bottom: 20px; }
         .fight-title { text-align: center; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 12px; }
         .btn-group { display: flex; gap: 10px; }
-        .btn { flex: 1; background-color: #334155; color: #f8fafc; border: 2px solid transparent; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .btn { flex: 1; background-color: #334155; color: #f8fafc; border: 2px solid transparent; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .fighter-img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #475569; background-color: #1e293b; }
+        .btn.active .fighter-img { border-color: #38bdf8; }
         .btn span { font-size: 11px; color: #38bdf8; }
         .btn.active { background-color: #0284c7; border-color: #38bdf8; }
         .form-group { margin-bottom: 16px; }
@@ -41,9 +43,11 @@
         <div class="fight-title">Fight 1</div>
         <div class="btn-group">
             <button class="btn" id="btn-TonyLiLi" onclick="selectFighter(1, 'TonyLiLi', this)">
+                <img src="https://placehold.co/150" class="fighter-img" alt="Tony LiLi">
                 Tony LiLi <span id="odds-TonyLiLi">Odds: 2.00x</span>
             </button>
             <button class="btn" id="btn-KevinBrown" onclick="selectFighter(1, 'KevinBrown', this)">
+                <img src="https://placehold.co/150" class="fighter-img" alt="Kevin Brown">
                 Kevin Brown <span id="odds-KevinBrown">Odds: 2.00x</span>
             </button>
         </div>
@@ -54,9 +58,11 @@
         <div class="fight-title">Fight 2</div>
         <div class="btn-group">
             <button class="btn" id="btn-JianHao" onclick="selectFighter(2, 'JianHao', this)">
+                <img src="https://placehold.co/150" class="fighter-img" alt="Jian Hao">
                 Jian Hao <span id="odds-JianHao">Odds: 2.00x</span>
             </button>
             <button class="btn" id="btn-Zhu" onclick="selectFighter(2, 'Zhu', this)">
+                <img src="https://placehold.co/150" class="fighter-img" alt="Zhu">
                 Zhu <span id="odds-Zhu">Odds: 2.00x</span>
             </button>
         </div>
@@ -92,11 +98,11 @@
 </div>
 
 <script>
-    // REPLACE THESE WITH YOUR ACTUAL SUPABASE KEYS
     const SUPABASE_URL = 'https://gehbyxxgqvbbxjdbdlrw.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_kBZ3vAiZCqgb-0BAj16e1w_UU6GSwjo';
+    const SUPABASE_KEY = 'sb_publishable_kBZ3vAiZCqgb-0BAj16e1w_UU6GSwjo'; 
     
-   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // Fixed naming conflict here
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let currentOdds = {
         TonyLiLi: 2.0, KevinBrown: 2.0,
@@ -108,7 +114,6 @@
         2: { name: null }
     };
 
-    // Run immediately when page loads to set the pool odds
     fetchPoolData();
 
     function selectFighter(fightNum, fighterName, element) {
@@ -118,7 +123,6 @@
         
         userSelections[fightNum].name = fighterName;
         
-        // Check if both fights have a selection
         const submitBtn = document.getElementById('submitBetBtn');
         if (userSelections[1].name && userSelections[2].name) {
             submitBtn.disabled = false;
@@ -128,8 +132,7 @@
         calculateEstimatedPayouts();
     }
 
-   async function fetchPoolData() {
-        // Updated to supabaseClient
+    async function fetchPoolData() {
         const { data: bets, error } = await supabaseClient.from('bets').select('*');
         if (error) return console.error(error);
 
@@ -139,7 +142,6 @@
             JianHao: 0, Zhu: 0
         };
 
-        // Tally up all the cash in the system
         bets.forEach(bet => {
             if (bet.fight_number === 1) {
                 pools.F1_Total += bet.wager_amount;
@@ -150,13 +152,11 @@
             }
         });
 
-        // Calculate dynamic Parimutuel multiplier (Total Pool / Fighter Pool)
         if (pools.TonyLiLi > 0) currentOdds.TonyLiLi = pools.F1_Total / pools.TonyLiLi;
         if (pools.KevinBrown > 0) currentOdds.KevinBrown = pools.F1_Total / pools.KevinBrown;
         if (pools.JianHao > 0) currentOdds.JianHao = pools.F2_Total / pools.JianHao;
         if (pools.Zhu > 0) currentOdds.Zhu = pools.F2_Total / pools.Zhu;
 
-        // Update the button text labels
         document.getElementById('odds-TonyLiLi').innerText = `Odds: ${currentOdds.TonyLiLi.toFixed(2)}x`;
         document.getElementById('odds-KevinBrown').innerText = `Odds: ${currentOdds.KevinBrown.toFixed(2)}x`;
         document.getElementById('odds-JianHao').innerText = `Odds: ${currentOdds.JianHao.toFixed(2)}x`;
@@ -191,12 +191,10 @@
             return;
         }
 
-        // Send row for Fight 1
         const { error: err1 } = await supabaseClient.from('bets').insert([
             { player_name: name, fight_number: 1, fighter_picked: userSelections[1].name, wager_amount: wager }
         ]);
 
-        // Send row for Fight 2
         const { error: err2 } = await supabaseClient.from('bets').insert([
             { player_name: name, fight_number: 2, fighter_picked: userSelections[2].name, wager_amount: wager }
         ]);
@@ -205,13 +203,11 @@
             alert("Error saving your bets. Double check your Supabase keys.");
         } else {
             alert("Ticket successfully logged in the database!");
-            // Reset form selections
             document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
             userSelections = { 1: { name: null }, 2: { name: null } };
             document.getElementById('playerName').value = '';
             document.getElementById('submitBetBtn').disabled = true;
             document.getElementById('submitBetBtn').innerText = "Select Both Fights to Bet";
-            // Refresh pool math from the cloud
             fetchPoolData();
         }
     }
