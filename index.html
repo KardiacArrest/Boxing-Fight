@@ -225,22 +225,45 @@
     }
 
     function calculateEstimatedPayouts() {
-        const wager1 = parseFloat(document.getElementById('wager1').value) || 0;
-        const wager2 = parseFloat(document.getElementById('wager2').value) || 0;
+      const wager1 = parseFloat(document.getElementById('wager1').value) || 0;
+    const wager2 = parseFloat(document.getElementById('wager2').value) || 0;
 
-        if (userSelections[1].name) {
-            const p1 = wager1 * currentOdds[userSelections[1].name];
-            document.getElementById('payout-f1').innerText = `$${p1.toFixed(2)}`;
-        } else {
-            document.getElementById('payout-f1').innerText = `$0.00`;
-        }
+    // We need to pull the current database totals from our global pools tracking
+    // To do this easily, let's recalculate the live database values dynamically
+    let f1Total = currentOdds.F1_Total_Raw || 0;
+    let f2Total = currentOdds.F2_Total_Raw || 0;
+    let tonyTotal = currentOdds.TonyLiLi_Raw || 0;
+    let kevinTotal = currentOdds.KevinBrown_Raw || 0;
+    let jianTotal = currentOdds.JianHao_Raw || 0;
+    let zhuTotal = currentOdds.Zhu_Raw || 0;
+
+    // --- FIGHT 1 ESTIMATE ---
+    if (userSelections[1].name && wager1 > 0) {
+        // Simulate adding the new wager to the pool totals
+        const simulatedTotalPool = f1Total + wager1;
+        let simulatedFighterPool = userSelections[1].name === 'TonyLiLi' ? tonyTotal + wager1 : kevinTotal + wager1;
         
-        if (userSelections[2].name) {
-            const p2 = wager2 * currentOdds[userSelections[2].name];
-            document.getElementById('payout-f2').innerText = `$${p2.toFixed(2)}`;
-        } else {
-            document.getElementById('payout-f2').innerText = `$0.00`;
-        }
+        // Dynamic Multiplier = (Current Pool + New Wager) / (Fighter Pool + New Wager)
+        const simulatedOdds = simulatedTotalPool / simulatedFighterPool;
+        const p1 = wager1 * simulatedOdds;
+        
+        document.getElementById('payout-f1').innerText = `$${p1.toFixed(2)}`;
+    } else {
+        document.getElementById('payout-f1').innerText = `$0.00`;
+    }
+    
+    // --- FIGHT 2 ESTIMATE ---
+    if (userSelections[2].name && wager2 > 0) {
+        const simulatedTotalPool = f2Total + wager2;
+        let simulatedFighterPool = userSelections[2].name === 'JianHao' ? jianTotal + wager2 : zhuTotal + wager2;
+        
+        const simulatedOdds = simulatedTotalPool / simulatedFighterPool;
+        const p2 = wager2 * simulatedOdds;
+        
+        document.getElementById('payout-f2').innerText = `$${p2.toFixed(2)}`;
+    } else {
+        document.getElementById('payout-f2').innerText = `$0.00`;
+    }
     }
 
     async function submitBetTicket() {
