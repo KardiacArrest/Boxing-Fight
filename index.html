@@ -66,23 +66,29 @@
             </button>
         </div>
         
-        <!-- Live Money Distribution Bar -->
-        <div class="pool-bar-container">
-            <div class="pool-bar-labels">
-                <span id="pct-TonyLiLi">50% of pool</span>
-                <span id="pct-KevinBrown">50% of pool</span>
-            </div>
-            <div class="pool-bar">
-                <div id="bar-TonyLiLi" class="pool-bar-left"></div>
-                <div id="bar-KevinBrown" class="pool-bar-right"></div>
-            </div>
-        </div>
-
-        <div class="wager-row">
-            <label for="wager1">Fight 1 Wager ($)</label>
-            <input type="number" id="wager1" class="wager-input" value="10" min="1" oninput="calculateEstimatedPayouts()">
-        </div>
+      <!-- Live Money & Vote Distribution Bars -->
+<div class="pool-bar-container">
+    <!-- Cash Pool Layer -->
+    <div class="pool-bar-labels">
+        <span id="pct-TonyLiLi">50% of cash pool</span>
+        <span id="pct-KevinBrown">50% of cash pool</span>
     </div>
+    <div class="pool-bar" style="margin-bottom: 12px;">
+        <div id="bar-TonyLiLi" class="pool-bar-left"></div>
+        <div id="bar-KevinBrown" class="pool-bar-right"></div>
+    </div>
+
+    <!-- Vote Distribution Layer -->
+    <div class="pool-bar-labels">
+        <span id="votes-TonyLiLi">0 votes</span>
+        <span id="votes-KevinBrown">0 votes</span>
+    </div>
+    <div class="pool-bar">
+        <!-- Using purple/orange to visually separate votes from cash colors -->
+        <div id="vote-bar-TonyLiLi" class="pool-bar-left" style="background-color: #a855f7; width: 50%;"></div>
+        <div id="vote-bar-KevinBrown" class="pool-bar-right" style="background-color: #f97316; width: 50%;"></div>
+    </div>
+</div>
 
     <!-- Fight 2 -->
     <div class="fight-card">
@@ -101,22 +107,28 @@
         </div>
 
         <!-- Live Money Distribution Bar -->
-        <div class="pool-bar-container">
-            <div class="pool-bar-labels">
-                <span id="pct-JianHao">50% of pool</span>
-                <span id="pct-Zhu">50% of pool</span>
-            </div>
-            <div class="pool-bar">
-                <div id="bar-JianHao" class="pool-bar-left"></div>
-                <div id="bar-Zhu" class="pool-bar-right"></div>
-            </div>
-        </div>
-
-        <div class="wager-row">
-            <label for="wager2">Fight 2 Wager ($)</label>
-            <input type="number" id="wager2" class="wager-input" value="10" min="1" oninput="calculateEstimatedPayouts()">
-        </div>
+       <!-- Live Money & Vote Distribution Bars -->
+<div class="pool-bar-container">
+    <!-- Cash Pool Layer -->
+    <div class="pool-bar-labels">
+        <span id="pct-JianHao">50% of cash pool</span>
+        <span id="pct-Zhu">50% of cash pool</span>
     </div>
+    <div class="pool-bar" style="margin-bottom: 12px;">
+        <div id="bar-JianHao" class="pool-bar-left"></div>
+        <div id="bar-Zhu" class="pool-bar-right"></div>
+    </div>
+
+    <!-- Vote Distribution Layer -->
+    <div class="pool-bar-labels">
+        <span id="votes-JianHao">0 votes</span>
+        <span id="votes-Zhu">0 votes</span>
+    </div>
+    <div class="pool-bar">
+        <div id="vote-bar-JianHao" class="pool-bar-left" style="background-color: #a855f7; width: 50%;"></div>
+        <div id="vote-bar-Zhu" class="pool-bar-right" style="background-color: #f97316; width: 50%;"></div>
+    </div>
+</div>
 
     <!-- User Inputs -->
     <div class="form-group">
