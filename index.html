@@ -190,7 +190,6 @@ async function fetchPoolData() {
     const { data: bets, error } = await supabaseClient.from('bets').select('*');
     if (error) return console.error(error);
 
-    // Initializing structure to hold cash pools and vote counts independently
     let pools = {
         F1_Total: 0, F2_Total: 0,
         TonyLiLi: 0, KevinBrown: 0,
@@ -198,6 +197,7 @@ async function fetchPoolData() {
     };
 
     let votes = {
+        F1_Total_Votes: 0, F2_Total_Votes: 0,
         TonyLiLi: 0, KevinBrown: 0,
         JianHao: 0, Zhu: 0
     };
@@ -207,16 +207,75 @@ async function fetchPoolData() {
             pools.F1_Total += bet.wager_amount;
             if (pools[bet.fighter_picked] !== undefined) {
                 pools[bet.fighter_picked] += bet.wager_amount;
-                votes[bet.fighter_picked] += 1; // Increment vote regardless of wager size
+                votes.F1_Total_Votes += 1;
+                votes[bet.fighter_picked] += 1;
             }
         } else if (bet.fight_number === 2) {
             pools.F2_Total += bet.wager_amount;
             if (pools[bet.fighter_picked] !== undefined) {
                 pools[bet.fighter_picked] += bet.wager_amount;
-                votes[bet.fighter_picked] += 1; // Increment vote regardless of wager size
+                votes.F2_Total_Votes += 1;
+                votes[bet.fighter_picked] += 1;
             }
         }
     });
+
+    // Save raw data globally
+    currentOdds.F1_Total_Raw = pools.F1_Total;
+    currentOdds.F2_Total_Raw = pools.F2_Total;
+    currentOdds.TonyLiLi_Raw = pools.TonyLiLi;
+    currentOdds.KevinBrown_Raw = pools.KevinBrown;
+    currentOdds.JianHao_Raw = pools.JianHao;
+    currentOdds.Zhu_Raw = pools.Zhu;
+
+    // Multipliers
+    currentOdds.TonyLiLi = pools.TonyLiLi > 0 ? pools.F1_Total / pools.TonyLiLi : (pools.F1_Total === 0 ? 2.00 : 1.00);
+    currentOdds.KevinBrown = pools.KevinBrown > 0 ? pools.F1_Total / pools.KevinBrown : (pools.F1_Total === 0 ? 2.00 : 1.00);
+    currentOdds.JianHao = pools.JianHao > 0 ? pools.F2_Total / pools.JianHao : (pools.F2_Total === 0 ? 2.00 : 1.00);
+    currentOdds.Zhu = pools.Zhu > 0 ? pools.F2_Total / pools.Zhu : (pools.F2_Total === 0 ? 2.00 : 1.00);
+
+    // Percentage Splits (Cash)
+    const pctTony = pools.F1_Total > 0 ? (pools.TonyLiLi / pools.F1_Total) * 100 : 50;
+    const pctKevin = pools.F1_Total > 0 ? (pools.KevinBrown / pools.F1_Total) * 100 : 50;
+    const pctJian = pools.F2_Total > 0 ? (pools.JianHao / pools.F2_Total) * 100 : 50;
+    const pctZhu = pools.F2_Total > 0 ? (pools.Zhu / pools.F2_Total) * 100 : 50;
+
+    // Percentage Splits (Votes)
+    const votePctTony = votes.F1_Total_Votes > 0 ? (votes.TonyLiLi / votes.F1_Total_Votes) * 100 : 50;
+    const votePctKevin = votes.F1_Total_Votes > 0 ? (votes.KevinBrown / votes.F1_Total_Votes) * 100 : 50;
+    const votePctJian = votes.F2_Total_Votes > 0 ? (votes.JianHao / votes.F2_Total_Votes) * 100 : 50;
+    const votePctZhu = votes.F2_Total_Votes > 0 ? (votes.Zhu / votes.F2_Total_Votes) * 100 : 50;
+
+    // Render Odds
+    document.getElementById('odds-TonyLiLi').innerText = `Return Multiplier: ${currentOdds.TonyLiLi.toFixed(2)}x`;
+    document.getElementById('odds-KevinBrown').innerText = `Return Multiplier: ${currentOdds.KevinBrown.toFixed(2)}x`;
+    document.getElementById('odds-JianHao').innerText = `Return Multiplier: ${currentOdds.JianHao.toFixed(2)}x`;
+    document.getElementById('odds-Zhu').innerText = `Return Multiplier: ${currentOdds.Zhu.toFixed(2)}x`;
+
+    // Render Fight 1 Cash & Vote Metrics Separately
+    document.getElementById('pct-TonyLiLi').innerText = `$${pools.TonyLiLi} (${pctTony.toFixed(0)}% of cash)`;
+    document.getElementById('pct-KevinBrown').innerText = `$${pools.KevinBrown} (${pctKevin.toFixed(0)}% of cash)`;
+    document.getElementById('bar-TonyLiLi').style.width = `${pctTony}%`;
+    document.getElementById('bar-KevinBrown').style.width = `${pctKevin}%`;
+
+    document.getElementById('votes-TonyLiLi').innerText = `${votes.TonyLiLi} votes (${votePctTony.toFixed(0)}%)`;
+    document.getElementById('votes-KevinBrown').innerText = `${votes.KevinBrown} votes (${votePctKevin.toFixed(0)}%)`;
+    document.getElementById('vote-bar-TonyLiLi').style.width = `${votePctTony}%`;
+    document.getElementById('vote-bar-KevinBrown').style.width = `${votePctKevin}%`;
+
+    // Render Fight 2 Cash & Vote Metrics Separately
+    document.getElementById('pct-JianHao').innerText = `$${pools.JianHao} (${pctJian.toFixed(0)}% of cash)`;
+    document.getElementById('pct-Zhu').innerText = `$${pools.Zhu} (${pctZhu.toFixed(0)}% of cash)`;
+    document.getElementById('bar-JianHao').style.width = `${pctJian}%`;
+    document.getElementById('bar-Zhu').style.width = `${pctZhu}%`;
+
+    document.getElementById('votes-JianHao').innerText = `${votes.JianHao} votes (${votePctJian.toFixed(0)}%)`;
+    document.getElementById('votes-Zhu').innerText = `${votes.Zhu} votes (${votePctZhu.toFixed(0)}%)`;
+    document.getElementById('vote-bar-JianHao').style.width = `${votePctJian}%`;
+    document.getElementById('vote-bar-Zhu').style.width = `${votePctZhu}%`;
+
+    calculateEstimatedPayouts();
+}
 
     // Save raw metrics globally so payout estimation handles context cleanly
     currentOdds.F1_Total_Raw = pools.F1_Total;
