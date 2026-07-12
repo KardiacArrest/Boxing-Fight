@@ -8,8 +8,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; }
-        body { background-color: #0f172a; color: #f8fafc; padding: 20px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 480px; background-color: #1e293b; padding: 24px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
+        body { background-color: #0f172a; color: #f8fafc; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 480px; background-color: #1e293b; padding: 24px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); margin-top: 12px; }
         h1 { text-align: center; font-size: 24px; margin-bottom: 4px; color: #38bdf8; }
         .subtitle { text-align: center; font-size: 14px; color: #94a3b8; margin-bottom: 12px; }
         .status-banner { text-align: center; font-size: 12px; color: #38bdf8; background-color: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.2); padding: 8px; border-radius: 8px; margin-bottom: 24px; font-weight: 500; }
@@ -43,16 +43,17 @@
         .slip-header { font-size: 14px; font-weight: 700; text-transform: uppercase; color: #38bdf8; margin: 20px 0 12px 0; border-bottom: 1px solid #334155; padding-bottom: 6px; }
         .payout-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 15px; }
         .payout-row span:last-child { font-weight: 700; color: #4ade80; }
+        .date { font-size: 14px; color: #94a3b8; margin-top: 8px; font-weight: 500; }
     </style>
 </head>
 <body>
+
+<div class="date">July 19, 2026</div>
 
 <div class="container" id="main-pool">
     <h1>Fei Long Boxing</h1>
     <div class="subtitle">Pre Fight Bets</div>
     <div class="status-banner">🔄 This site updates continuously based on live events</div>
-</div>
-<div class="date" style="text-align: center;">July 19, 2026</div>
 
     <!-- Fight 1 -->
     <div class="fight-card">
@@ -147,7 +148,7 @@
     <!-- User Inputs -->
     <div class="form-group">
         <label for="playerName">Your Name</label>
-        <input type="text" id="playerName" placeholder="Enter name to lock in bet">
+        <input type="text" id="playerName" placeholder="Enter name to lock in bet" oninput="checkFormValidity()">
     </div>
 
     <button class="submit-btn" id="submitBetBtn" onclick="submitBetTicket()" disabled>Select Both Fights to Bet</button>
@@ -170,7 +171,6 @@
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Global tracking object for multipliers, raw pool metrics, and vote counts
     let currentOdds = {
         TonyLiLi: 2.0, KevinBrown: 2.0, JianHao: 2.0, Zhu: 2.0,
         F1_Total_Raw: 0, F2_Total_Raw: 0,
@@ -184,19 +184,29 @@
 
     fetchPoolData();
 
+    function checkFormValidity() {
+        const name = document.getElementById('playerName').value.trim();
+        const submitBtn = document.getElementById('submitBetBtn');
+        if (userSelections[1].name && userSelections[2].name && name.length > 0) {
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Submit Bet Ticket";
+        } else {
+            submitBtn.disabled = true;
+            if (!userSelections[1].name || !userSelections[2].name) {
+                submitBtn.innerText = "Select Both Fights to Bet";
+            } else {
+                submitBtn.innerText = "Enter Name to Bet";
+            }
+        }
+    }
+
     function selectFighter(fightNum, fighterName, element) {
         const buttons = element.parentElement.querySelectorAll('.btn');
         buttons.forEach(btn => btn.classList.remove('active'));
         element.classList.add('active');
         
         userSelections[fightNum].name = fighterName;
-        
-        const submitBtn = document.getElementById('submitBetBtn');
-        if (userSelections[1].name && userSelections[2].name) {
-            submitBtn.disabled = false;
-            submitBtn.innerText = "Submit Bet Ticket";
-        }
-        
+        checkFormValidity();
         calculateEstimatedPayouts();
     }
 
@@ -234,7 +244,6 @@
             }
         });
 
-        // Save raw data globally
         currentOdds.F1_Total_Raw = pools.F1_Total;
         currentOdds.F2_Total_Raw = pools.F2_Total;
         currentOdds.TonyLiLi_Raw = pools.TonyLiLi;
@@ -242,31 +251,26 @@
         currentOdds.JianHao_Raw = pools.JianHao;
         currentOdds.Zhu_Raw = pools.Zhu;
 
-        // Multipliers
         currentOdds.TonyLiLi = pools.TonyLiLi > 0 ? pools.F1_Total / pools.TonyLiLi : (pools.F1_Total === 0 ? 2.00 : 1.00);
         currentOdds.KevinBrown = pools.KevinBrown > 0 ? pools.F1_Total / pools.KevinBrown : (pools.F1_Total === 0 ? 2.00 : 1.00);
         currentOdds.JianHao = pools.JianHao > 0 ? pools.F2_Total / pools.JianHao : (pools.F2_Total === 0 ? 2.00 : 1.00);
         currentOdds.Zhu = pools.Zhu > 0 ? pools.F2_Total / pools.Zhu : (pools.F2_Total === 0 ? 2.00 : 1.00);
 
-        // Percentage Splits (Cash)
         const pctTony = pools.F1_Total > 0 ? (pools.TonyLiLi / pools.F1_Total) * 100 : 50;
         const pctKevin = pools.F1_Total > 0 ? (pools.KevinBrown / pools.F1_Total) * 100 : 50;
         const pctJian = pools.F2_Total > 0 ? (pools.JianHao / pools.F2_Total) * 100 : 50;
         const pctZhu = pools.F2_Total > 0 ? (pools.Zhu / pools.F2_Total) * 100 : 50;
 
-        // Percentage Splits (Votes)
         const votePctTony = votes.F1_Total_Votes > 0 ? (votes.TonyLiLi / votes.F1_Total_Votes) * 100 : 50;
         const votePctKevin = votes.F1_Total_Votes > 0 ? (votes.KevinBrown / votes.F1_Total_Votes) * 100 : 50;
         const votePctJian = votes.F2_Total_Votes > 0 ? (votes.JianHao / votes.F2_Total_Votes) * 100 : 50;
         const votePctZhu = votes.F2_Total_Votes > 0 ? (votes.Zhu / votes.F2_Total_Votes) * 100 : 50;
 
-        // Render Odds
         document.getElementById('odds-TonyLiLi').innerText = `Return Multiplier: ${currentOdds.TonyLiLi.toFixed(2)}x`;
         document.getElementById('odds-KevinBrown').innerText = `Return Multiplier: ${currentOdds.KevinBrown.toFixed(2)}x`;
         document.getElementById('odds-JianHao').innerText = `Return Multiplier: ${currentOdds.JianHao.toFixed(2)}x`;
         document.getElementById('odds-Zhu').innerText = `Return Multiplier: ${currentOdds.Zhu.toFixed(2)}x`;
 
-        // Render Fight 1 Cash & Vote Metrics Separately
         document.getElementById('pct-TonyLiLi').innerText = `$${pools.TonyLiLi} (${pctTony.toFixed(0)}% of cash)`;
         document.getElementById('pct-KevinBrown').innerText = `$${pools.KevinBrown} (${pctKevin.toFixed(0)}% of cash)`;
         document.getElementById('bar-TonyLiLi').style.width = `${pctTony}%`;
@@ -277,7 +281,6 @@
         document.getElementById('vote-bar-TonyLiLi').style.width = `${votePctTony}%`;
         document.getElementById('vote-bar-KevinBrown').style.width = `${votePctKevin}%`;
 
-        // Render Fight 2 Cash & Vote Metrics Separately
         document.getElementById('pct-JianHao').innerText = `$${pools.JianHao} (${pctJian.toFixed(0)}% of cash)`;
         document.getElementById('pct-Zhu').innerText = `$${pools.Zhu} (${pctZhu.toFixed(0)}% of cash)`;
         document.getElementById('bar-JianHao').style.width = `${pctJian}%`;
@@ -302,7 +305,6 @@
         let jianTotal = currentOdds.JianHao_Raw || 0;
         let zhuTotal = currentOdds.Zhu_Raw || 0;
 
-        // Fight 1 Math
         if (userSelections[1].name && wager1 > 0) {
             const simulatedTotalPool = f1Total + wager1;
             let simulatedFighterPool = userSelections[1].name === 'TonyLiLi' ? tonyTotal + wager1 : kevinTotal + wager1;
@@ -313,7 +315,6 @@
             document.getElementById('payout-f1').innerText = `$0.00`;
         }
         
-        // Fight 2 Math
         if (userSelections[2].name && wager2 > 0) {
             const simulatedTotalPool = f2Total + wager2;
             let simulatedFighterPool = userSelections[2].name === 'JianHao' ? jianTotal + wager2 : zhuTotal + wager2;
@@ -352,8 +353,7 @@
             document.getElementById('playerName').value = '';
             document.getElementById('wager1').value = '10';
             document.getElementById('wager2').value = '10';
-            document.getElementById('submitBetBtn').disabled = true;
-            document.getElementById('submitBetBtn').innerText = "Select Both Fights to Bet";
+            checkFormValidity();
             fetchPoolData();
         }
     }
